@@ -1,0 +1,12 @@
+# Eclipse
+.project
+.cproject
+.pydevproject
+.settings/
+
+# SCons
+.sconsign.dblite
+config.log
+
+# Build
+build/
