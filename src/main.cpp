@@ -37,7 +37,9 @@
  * @section DESCRIPTION
  */
 
+#ifdef USE_MPI
 #include <mpi.h>
+#endif // USE_MPI
 
 #include <cstdlib>
 #include <string>

@@ -4,6 +4,11 @@
 .pydevproject
 .settings/
 
+# KDevelop
+.kdev4
+*.kdev4
+.kdev_include_paths
+
 # SCons
 .sconsign.dblite
 config.log
