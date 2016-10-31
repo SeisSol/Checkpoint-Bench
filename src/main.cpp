@@ -41,6 +41,7 @@
 #include <mpi.h>
 #endif // USE_MPI
 
+#include <unistd.h>
 #include <cstdlib>
 #include <string>
 
@@ -68,6 +69,7 @@ int main(int argc, char* argv[])
 	args.addOption("elements", 'e', "number of elements per rank", utils::Args::Required, false);
 	args.addOption("total", 't', "total number of elements", utils::Args::Required, false);
 	args.addOption("iterations", 'i', "number of iterations (Default: 10)", utils::Args::Required, false);
+	args.addOption("ComputePhase", 'C', "places sleep(seconds) after filling DOFs to mimick a computation phase (Default: 0)", utils::Args::Required, false);
 
 	switch (args.parse(argc, argv, mpi.rank() == 0)) {
 	case utils::Args::Success:
@@ -101,6 +103,7 @@ int main(int argc, char* argv[])
 
 	unsigned long elements = args.getArgument("elements", 0ul);
 	unsigned long total = args.getArgument("total", 0ul);
+	unsigned int sleepSeconds= args.getArgument("ComputePhase", 0U);
 
 	if (elements > 0) {
 		if (total > 0)
@@ -153,7 +156,10 @@ int main(int argc, char* argv[])
 			dofs[j] = i * elements + j;
 		}
 		SCOREP_USER_REGION_END(r_fill);
-
+		if(sleepSeconds>0){
+		  logInfo(mpi.rank())<<"mimick ComputePhase for "<<sleepSeconds<<" seconds";
+		  sleep(sleepSeconds);
+		}
 #ifdef USE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif // USE_MPI
