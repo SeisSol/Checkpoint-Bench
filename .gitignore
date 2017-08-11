@@ -11,6 +11,7 @@
 
 # SCons
 .sconsign.dblite
+.sconf_temp/
 config.log
 
 # Build
