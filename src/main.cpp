@@ -49,17 +49,17 @@
 
 #include "Checkpoint/Manager.h"
 #include "Monitoring/instrumentation.fpp"
-// FIXME Use stopwatch from SeisSol repository as soon as we upgrade to the lastest version
 #include "Monitoring/Stopwatch.h"
 #include "Parallel/MPI.h"
+#include "Equations/elastic/Kernels/equations.hpp"
 
 int main(int argc, char* argv[])
 {
 	SCOREP_USER_REGION("checkpoint-bench", SCOREP_USER_REGION_TYPE_FUNCTION);
 
 	// Set up MPI
-	seissol::MPI mpi;
-	mpi.init(argc, argv);
+	seissol::MPI::mpi.init(argc, argv);
+	const int rank = seissol::MPI::mpi.rank();
 
 	// Parse command line arguements
 	utils::Args args;
@@ -71,14 +71,14 @@ int main(int argc, char* argv[])
 	args.addOption("iterations", 'i', "number of iterations (Default: 10)", utils::Args::Required, false);
 	args.addOption("ComputePhase", 'C', "places sleep(seconds) after filling DOFs to mimick a computation phase (Default: 0)", utils::Args::Required, false);
 
-	switch (args.parse(argc, argv, mpi.rank() == 0)) {
+	switch (args.parse(argc, argv, rank == 0)) {
 	case utils::Args::Success:
 		break;
 	case utils::Args::Help:
-		mpi.finalize();
+		seissol::MPI::mpi.finalize();
 		return 0;
 	case utils::Args::Error:
-		mpi.finalize();
+		seissol::MPI::mpi.finalize();
 		return 1;
 	}
 
@@ -107,15 +107,15 @@ int main(int argc, char* argv[])
 
 	if (elements > 0) {
 		if (total > 0)
-			logWarning(mpi.rank()) << "Elements per rank and total number of elements set, ignoring total number of elements";
+			logWarning(rank) << "Elements per rank and total number of elements set, ignoring total number of elements";
 
 #ifdef USE_MPI
 		MPI_Reduce(&elements, &total, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif // USE_MPI
 	} else if (total > 0) {
-		elements = (total + mpi.size() - 1) / mpi.size();
-		if (mpi.rank() == mpi.size() - 1)
-			elements = total - (elements * (mpi.size()-1));
+		elements = (total + seissol::MPI::mpi.size() - 1) / seissol::MPI::mpi.size();
+		if (rank == seissol::MPI::mpi.size() - 1)
+			elements = total - (elements * (seissol::MPI::mpi.size()-1));
 	} else {
 		logError() << "Elements per rank or total number of elements required";
 	}
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 	double time;
 	int waveFieldTimestep;
 	int faultTimestep;
-	manager.init(dofs, elements, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0, 0, time, waveFieldTimestep, faultTimestep);
+	manager.init(dofs, elements, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0, 1, time, waveFieldTimestep, faultTimestep);
 	SCOREP_USER_REGION_END(r_init_checkpoint);
 
 	// Iterate
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 	double totalTime = 0;
 
 	for (unsigned int i = 0; i < iterations; i++) {
-		logInfo(mpi.rank()) << "Iteration" << i;
+		logInfo(rank) << "Iteration" << i;
 		SCOREP_USER_REGION_BEGIN(r_fill, "fill_dofs", SCOREP_USER_REGION_TYPE_COMMON);
 #ifdef _OPENMP
 		#pragma omp parallel for
@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
 		}
 		SCOREP_USER_REGION_END(r_fill);
 		if(sleepSeconds>0){
-		  logInfo(mpi.rank())<<"mimick ComputePhase for "<<sleepSeconds<<" seconds";
+		  logInfo(rank)<<"mimick ComputePhase for "<<sleepSeconds<<" seconds";
 		  sleep(sleepSeconds);
 		}
 #ifdef USE_MPI
@@ -176,13 +176,13 @@ int main(int argc, char* argv[])
 
 		totalTime += t;
 
-		logInfo(mpi.rank()) << "Time:" << t << "s, bandwidth:" << (total*sizeof(real)) / t / (1024 * 1024) << "MiB/s";
+		logInfo(rank) << "Time:" << t << "s, bandwidth:" << (total*sizeof(real)) / t / (1024 * 1024) << "MiB/s";
 	}
 
 	SCOREP_USER_REGION_END(r_iterate);
 
 	// Statistics
-	logInfo(mpi.rank()) << "Avg time:" << totalTime/iterations
+	logInfo(rank) << "Avg time:" << totalTime/iterations
 			<< "s, avg Bandwidth:" << (total*sizeof(real)*iterations) / totalTime / (1024 * 1024) << "MiB/s";
 
 	// Finalize checkpoint manager
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
 	SCOREP_USER_REGION_END(r_finalize_checkpoint)
 
 	// Finalize MPI
-	mpi.finalize();
+	seissol::MPI::mpi.finalize();
 
 	return 0;
 }

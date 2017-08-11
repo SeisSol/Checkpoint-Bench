@@ -13,6 +13,7 @@
 .sconsign.dblite
 .sconf_temp/
 config.log
+*.pyc
 
 # Build
 build/

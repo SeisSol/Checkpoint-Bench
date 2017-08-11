@@ -83,7 +83,7 @@ vars.AddVariables(
 EnumVariable( 'equations',
                 'system of PDEs that will be solved',
                 'elastic',
-                allowed_values=('elastic')
+                allowed_values=('elastic',)
               ),
                   
   EnumVariable( 'order',
@@ -209,6 +209,7 @@ if env['parallelization'] in ['mpi', 'hybrid']:
 # Remove any special compiler configuration
 # Do this after the MPI tool is called, because the MPI Tool checks for special compilers
 if env['compiler'].startswith('cray'):
+    #env.Append(LINKFLAGS=['-dynamic'])
     env['compiler'] = env['compiler'].replace('cray_', '')
 
 # Include preprocessor in all Fortran builds
@@ -342,7 +343,7 @@ env.Append(CPPDEFINES=['NUMBER_OF_QUANTITIES=' + str(numberOfQuantities[ env['eq
 # add parallel flag for mpi
 if env['parallelization'] in ['mpi', 'hybrid']:
     # TODO rename PARALLEL to USE_MPI in the code
-    env.Append(CPPDEFINES=['USE_MPI'])
+    env.Append(CPPDEFINES=['USE_MPI', 'PARALLEL'])
 
 # add OpenMP flags
 if env['parallelization'] in ['omp', 'hybrid']:
@@ -364,8 +365,11 @@ elif env['logLevel'] == 'error':
 else:
   assert(false)
 
+# Enable checkpoint bench code
+env.Append(CPPDEFINES=['CHECKPOINT_BENCH'])
+
 # add include path for submodules
-env.Append( CPPPATH=['#/submodules', '#/submodules/glm'] )
+env.Append( CPPPATH=['#/submodules', '#/submodules/glm', '#/submodules/async'] )
 
 #
 # add libraries
@@ -409,6 +413,7 @@ env.generatedTestSourceFiles = []
 Export('env')
 SConscript('src/SConscript', variant_dir='#/'+env['buildDir'], src_dir='#/', duplicate=0)
 SConscript('seissol/src/Checkpoint/SConscript', variant_dir='#/'+env['buildDir']+'/Checkpoint', duplicate=0)
+SConscript('seissol/src/Parallel/SConscript', variant_dir='#/'+env['buildDir']+'/Parallel', duplicate=0)
 Import('env')
 
 # remove .mod entries for the linker
