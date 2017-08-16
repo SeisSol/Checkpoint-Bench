@@ -151,6 +151,8 @@ vars.AddVariables(
               ),
 )
 
+env.Tool('MPITool', vars=vars)
+
 # set environment
 env = Environment(variables=vars)
 
