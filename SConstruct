@@ -46,10 +46,10 @@ import sys
 import arch
 
 # print the welcome message
-print '*******************************************************'
-print '** Welcome to the build script of SeisSol-Checkpoint **'
-print '*******************************************************'
-print 'Copyright (c) 2016, SeisSol Group'
+print('*******************************************************')
+print('** Welcome to the build script of SeisSol-Checkpoint **')
+print('*******************************************************')
+print('Copyright (c) 2016, SeisSol Group')
 
 # Check if we the user wants to show help only
 if '-h' in sys.argv or '--help' in sys.argv:
@@ -62,7 +62,7 @@ def ConfigurationError(msg):
     if the user wants to show the help message"""
     
     if not helpMode:
-        print msg
+        print(msg)
         Exit(1) 
 
 #
@@ -175,7 +175,7 @@ if unknownVariables:
   
 # check for architecture
 if env['arch'] == 'snoarch' or env['arch'] == 'dnoarch':
-  print "*** Warning: Using fallback code for unknown architecture. Performance will suffer greatly if used by mistake and an architecture-specific implementation is available."
+  print("*** Warning: Using fallback code for unknown architecture. Performance will suffer greatly if used by mistake and an architecture-specific implementation is available.")
 
 #
 # preprocessor, compiler and linker
