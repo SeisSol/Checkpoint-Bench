@@ -1,3 +1,5 @@
+**(this repository is deprecated; it is restricted to the old checkpointing mechanism)**
+
 Checkpoint Bench
 ----------------
 
